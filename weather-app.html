@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Weather App</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        background-color: #f1f1f1;
+    }
+    #container {
+        width: 960px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+    }
+    #location {
+        font-size: 20px;
+        font-weight: bold;
+    }
+    #weather {
+        font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="location">
+    </div>
+    <div id="weather">
+    </div>
+  </div>
+  <script>
+    // Get geo location 
+    navigator.geolocation.getCurrentPosition(success, error);
+
+    function success(position) {
+        // Get latitude and longitude
+        var latitude  = position.coords.latitude;
+        var longitude = position.coords.longitude;
+
+        // Get location using lat and lng
+        var locationURL = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + latitude + "," + longitude + "&sensor=true";
+
+        // Make request for location
+        var locationRequest = new XMLHttpRequest();
+        locationRequest.open('GET', locationURL, true);
+        locationRequest.onload = function () {
+            if (locationRequest.status >= 200 && locationRequest.status < 400) {
+                var locationData = JSON.parse(locationRequest.responseText);
+                var cityName = locationData.results[0].address_components[3].long_name;
+
+                // Set location HTML
+                document.getElementById('location').innerHTML = cityName;
+
+                // Get weather using lat and lng 
+                var weatherURL = "https://api.openweathermap.org/data/2.5/weather?lat=" + latitude + "&lon=" + longitude + "&appid=YOUR_API_KEY";
+
+                // Make request for weather 
+                var weatherRequest = new XMLHttpRequest();
+                weatherRequest.open('GET', weatherURL, true);
+                weatherRequest.onload = function () {
+                    if (weatherRequest.status >= 200 && weatherRequest.status < 400) {
+                        var weatherData = JSON.parse(weatherRequest.responseText);
+                        var temperature = (weatherData.main.temp - 273.15) * 1.8 + 32; // Convert from Kelvin to Fahrenheit
+                        var weatherConditions = weatherData.weather[0].main;
+                        
+                        // Set weather HTML
+                        document.getElementById('weather').innerHTML = temperature + "°F and " + weatherConditions;
+                    } else {
+                        console.log('We reached our target server, but it returned an error');
+                    }
+                };
+                weatherRequest.onerror = function () {
+                    console.log('There was a connection error of some sort');
+                };
+
+                weatherRequest.send();
+            } else {
+                console.log('We reached our target server, but it returned an error');
+            }
+        };
+        locationRequest.onerror = function () {
+            console.log('There was a connection error of some sort');
+        };
+
+        locationRequest.send();
+    }
+
+    function error() {
+        console.log("Unable to retrieve your location");
+    }
+
+  </script>
+</body>
+</html>
